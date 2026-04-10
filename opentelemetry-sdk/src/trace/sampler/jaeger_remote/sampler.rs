@@ -1,5 +1,5 @@
+use crate::error::OTelSdkError;
 use crate::runtime::{to_interval_stream, RuntimeChannel};
-use crate::trace::error::TraceError;
 use crate::trace::sampler::jaeger_remote::remote::SamplingStrategyResponse;
 use crate::trace::sampler::jaeger_remote::sampling_strategy::Inner;
 use crate::trace::{Sampler, SamplingResult, ShouldSample};
@@ -100,9 +100,9 @@ where
     ///
     /// - the endpoint provided is empty.
     /// - the service name provided is empty.
-    pub fn build(self) -> Result<Sampler, TraceError> {
+    pub fn build(self) -> Result<Sampler, OTelSdkError> {
         let endpoint = Self::get_endpoint(&self.endpoint, &self.service_name)
-            .map_err(|err_str| TraceError::Other(err_str.into()))?;
+            .map_err(OTelSdkError::InternalFailure)?;
 
         Ok(Sampler::JaegerRemote(JaegerRemoteSampler::new(
             self.runtime,
