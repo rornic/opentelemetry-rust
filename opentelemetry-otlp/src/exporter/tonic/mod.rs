@@ -199,7 +199,9 @@ impl TonicExporterBuilder {
     > {
         let compression = self.resolve_compression(signal_compression_var)?;
 
-        let (headers_from_env, headers_for_logging) = parse_headers_from_env(signal_headers_var);
+        let (headers_from_env, all_headers) = parse_headers_from_env(signal_headers_var);
+        let headers_for_logging = redact_sensitive_headers(all_headers);
+
         let metadata = merge_metadata_with_headers_from_env(
             self.tonic_config.metadata.unwrap_or_default(),
             headers_from_env,
@@ -550,6 +552,25 @@ fn parse_headers_from_env(signal_headers_var: &str) -> (HeaderMap, Vec<(String, 
     )
 }
 
+fn redact_sensitive_headers(headers: Vec<(String, String)>) -> Vec<(String, String)> {
+    headers
+        .iter()
+        .map(|(k, v)| {
+            let header_name = k.to_lowercase();
+            let value = v.to_lowercase();
+            if header_name.contains("auth")
+                || header_name.contains("api-key")
+                || header_name.contains("token")
+                || value.contains("bearer")
+            {
+                (k.clone(), "[REDACTED]".to_string())
+            } else {
+                (k.clone(), v.clone())
+            }
+        })
+        .collect()
+}
+
 /// Expose interface for modifying [TonicConfig] fields within the exporter builders.
 pub(crate) trait HasTonicConfig {
     /// Return a mutable reference to the export config within the exporter builders.
@@ -749,7 +770,7 @@ impl<B: HasTonicConfig> WithTonicConfig for B {
 #[cfg(test)]
 mod tests {
     use crate::exporter::tests::run_env_test;
-    use crate::exporter::tonic::WithTonicConfig;
+    use crate::exporter::tonic::{redact_sensitive_headers, WithTonicConfig};
     #[cfg(feature = "grpc-tonic")]
     use crate::exporter::Compression;
     use crate::{TonicExporterBuilder, OTEL_EXPORTER_OTLP_TRACES_ENDPOINT};
@@ -919,6 +940,24 @@ mod tests {
                 );
                 assert_eq!(result.get("k1").unwrap(), MetadataValue::from_static("v1"));
                 assert_eq!(result.get("k2").unwrap(), MetadataValue::from_static("v2"));
+            },
+        );
+    }
+
+    #[test]
+    fn test_sensitive_headers_redacted() {
+        run_env_test(
+            vec![(
+                OTEL_EXPORTER_OTLP_HEADERS,
+                "authorization=Bearer my-secret-token",
+            )],
+            || {
+                let headers_from_env = super::parse_headers_from_env(OTEL_EXPORTER_OTLP_HEADERS);
+                let redacted = redact_sensitive_headers(headers_from_env.1);
+
+                let (_, header_value) =
+                    redacted.iter().find(|(k, _)| k == "authorization").unwrap();
+                assert_eq!(*header_value, "[REDACTED]".to_string())
             },
         );
     }
