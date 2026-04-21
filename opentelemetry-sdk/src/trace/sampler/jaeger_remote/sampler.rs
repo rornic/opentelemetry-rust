@@ -1,4 +1,3 @@
-use crate::error::OTelSdkError;
 use crate::runtime::{to_interval_stream, RuntimeChannel};
 use crate::trace::sampler::jaeger_remote::remote::SamplingStrategyResponse;
 use crate::trace::sampler::jaeger_remote::sampling_strategy::Inner;
