@@ -117,7 +117,7 @@ impl InMemorySpanExporter {
     ///
     /// # Errors
     ///
-    /// Returns an `OTelSdkError` if the internal lock cannot be acquired.
+    /// Returns an `OTelSdkError`.
     ///
     /// # Example
     ///
