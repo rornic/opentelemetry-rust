@@ -11,8 +11,15 @@ use opentelemetry_http::HttpClient;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
+use thiserror::Error;
 
 const DEFAULT_REMOTE_SAMPLER_ENDPOINT: &str = "http://localhost:5778/sampling";
+
+#[derive(Error, Debug)]
+pub enum JaegerRemoteSamplerBuildError {
+    #[error("Invalid endpoint. Unable to create JaegerRemoteSampler.")]
+    InvalidEndpoint(String),
+}
 
 /// Builder for [`JaegerRemoteSampler`].
 /// See [Sampler::jaeger_remote] for details.
@@ -100,9 +107,9 @@ where
     ///
     /// - the endpoint provided is empty.
     /// - the service name provided is empty.
-    pub fn build(self) -> Result<Sampler, OTelSdkError> {
+    pub fn build(self) -> Result<Sampler, JaegerRemoteSamplerBuildError> {
         let endpoint = Self::get_endpoint(&self.endpoint, &self.service_name)
-            .map_err(OTelSdkError::InternalFailure)?;
+            .map_err(JaegerRemoteSamplerBuildError::InvalidEndpoint)?;
 
         Ok(Sampler::JaegerRemote(JaegerRemoteSampler::new(
             self.runtime,
