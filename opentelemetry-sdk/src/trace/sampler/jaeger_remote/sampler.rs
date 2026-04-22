@@ -15,6 +15,7 @@ use thiserror::Error;
 const DEFAULT_REMOTE_SAMPLER_ENDPOINT: &str = "http://localhost:5778/sampling";
 
 #[derive(Error, Debug)]
+#[non_exhaustive]
 pub enum JaegerRemoteSamplerBuildError {
     #[error("Invalid endpoint. Unable to create JaegerRemoteSampler.")]
     InvalidEndpoint(String),
