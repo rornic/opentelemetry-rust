@@ -36,7 +36,7 @@
 [3262]: https://github.com/open-telemetry/opentelemetry-rust/pull/3262
 [3407]: https://github.com/open-telemetry/opentelemetry-rust/pull/3407
 [3435]: https://github.com/open-telemetry/opentelemetry-rust/issues/3435
-[3438]: https://github.com/open-telemetry/opentelemetry-rust/pull/3438
+[3458]: https://github.com/open-telemetry/opentelemetry-rust/pull/3458
 
 - "spec_unstable_logs_enabled" feature flag is removed. The capability (and the
   backing specification) is now stable and is enabled by default.
